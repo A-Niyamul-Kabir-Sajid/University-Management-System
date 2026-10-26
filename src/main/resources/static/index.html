@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>University Management System</title>
+<style>
+  :root {
+    --bg: #f4f6fb; --card: #fff; --text: #1f2937; --muted: #6b7280; --line: #e5e7eb;
+    --primary: #2563eb; --primary-dark: #1d4ed8; --danger: #dc2626; --ok: #16a34a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+  header { background: var(--primary); color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 18px; margin: 0; }
+  header .who { font-size: 14px; display: flex; gap: 12px; align-items: center; }
+  .badge { background: rgba(255,255,255,.2); padding: 2px 10px; border-radius: 999px; font-size: 12px; }
+  main { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+  .card { background: var(--card); border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 20px; margin-bottom: 20px; }
+  #login { max-width: 380px; margin: 80px auto; }
+  #login h2 { margin-top: 0; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+  input { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; }
+  input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+  button { cursor: pointer; border: 0; border-radius: 6px; padding: 8px 14px; font-size: 14px; background: var(--primary); color: #fff; }
+  button:hover { background: var(--primary-dark); }
+  button.secondary { background: #e5e7eb; color: var(--text); }
+  button.secondary:hover { background: #d1d5db; }
+  button.danger { background: var(--danger); }
+  button.small { padding: 4px 10px; font-size: 12px; }
+  header button { background: rgba(255,255,255,.2); }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tab { background: #fff; color: var(--text); border: 1px solid var(--line); }
+  .tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .bar h2 { margin: 0; font-size: 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  td.actions { white-space: nowrap; display: flex; gap: 6px; }
+  .empty { color: var(--muted); text-align: center; padding: 24px; }
+  .msg { padding: 10px 12px; border-radius: 6px; font-size: 14px; margin-bottom: 12px; display: none; }
+  .msg.error { display: block; background: #fee2e2; color: #991b1b; }
+  .msg.ok { display: block; background: #dcfce7; color: #166534; }
+  dialog { border: 0; border-radius: 10px; padding: 24px; width: 420px; max-width: 94vw; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  dialog h3 { margin-top: 0; }
+  .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+  .hint { font-size: 12px; color: var(--muted); }
+  pre { background: #111827; color: #e5e7eb; padding: 12px; border-radius: 8px; font-size: 12px; overflow: auto; margin: 8px 0 0; white-space: pre-wrap; word-break: break-all; }
+  .log-title { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginView">
+  <div id="login" class="card">
+    <h2>Sign in</h2>
+    <div id="loginMsg" class="msg"></div>
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input id="email" type="email" value="admin@ums.com" required autofocus>
+      <label for="password">Password</label>
+      <input id="password" type="password" value="admin123" required>
+      <div class="row" style="justify-content:stretch"><button style="width:100%" type="submit">Log in</button></div>
+    </form>
+    <p class="hint">Demo accounts: admin@ums.com / admin123 · teacher@ums.com / teacher123 · student@ums.com / student123</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="appView" class="hidden">
+  <header>
+    <h1>University Management System</h1>
+    <div class="who">
+      <span id="whoName"></span><span class="badge" id="whoRole"></span>
+      <button id="logoutBtn">Log out</button>
+    </div>
+  </header>
+  <main>
+    <div class="tabs" id="tabs"></div>
+    <div class="card">
+      <div class="bar">
+        <h2 id="listTitle"></h2>
+        <button id="addBtn">+ Add</button>
+      </div>
+      <div id="listMsg" class="msg"></div>
+      <table>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="log-title"><strong>Last API call</strong><span>the same request works from curl</span></div>
+      <pre id="log">Nothing yet. Use the buttons above.</pre>
+    </div>
+  </main>
+</div>
+
+<!-- ============ ADD / EDIT DIALOG ============ -->
+<dialog id="dlg">
+  <form id="userForm" method="dialog">
+    <h3 id="dlgTitle"></h3>
+    <div id="dlgMsg" class="msg"></div>
+    <label for="fName">Name</label><input id="fName" required>
+    <label for="fEmail">Email</label><input id="fEmail" type="email" required>
+    <label for="fPassword">Password</label><input id="fPassword" type="password" autocomplete="new-password">
+    <div class="hint" id="pwHint"></div>
+    <div id="deptWrap"><label for="fDept">Department</label><input id="fDept"></div>
+    <div id="sidWrap"><label for="fSid">Student ID</label><input id="fSid"></div>
+    <div class="row">
+      <button type="button" class="secondary" id="cancelBtn">Cancel</button>
+      <button type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const RESOURCES = {
+  STUDENT: { path: 'students', label: 'Students' },
+  TEACHER: { path: 'teachers', label: 'Teachers' },
+  ADMIN:   { path: 'admins',   label: 'Admins'   },
+};
+// Which tabs each role can open (mirrors SecurityConfig)
+const ALLOWED = { ADMIN: ['STUDENT', 'TEACHER', 'ADMIN'], TEACHER: ['TEACHER'], STUDENT: ['STUDENT'] };
+
+let me = null;          // logged-in user
+let current = null;     // active resource key, e.g. 'STUDENT'
+let editingId = null;   // null = creating
+
+const $ = id => document.getElementById(id);
+
+function show(el, text, kind) { el.textContent = text; el.className = 'msg ' + kind; }
+function hide(el) { el.className = 'msg'; el.textContent = ''; }
+
+// One place for every request, so the log panel always shows what was sent.
+async function api(method, url, body) {
+  const opts = { method, headers: {}, credentials: 'same-origin' };
+  if (body !== undefined) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(url, opts);
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  logCall(method, url, body, res.status, data);
+  if (res.status === 401 && url !== '/api/auth/login') { showLogin(); }
+  return { ok: res.ok, status: res.status, data };
+}
+
+function logCall(method, url, body, status, data) {
+  let curl = 'curl.exe -b cookies.txt';
+  if (method !== 'GET') curl += ' -X ' + method;
+  curl += ' http://localhost:8080' + url;
+  if (body !== undefined) {
+    const shown = { ...body }; if (shown.password) shown.password = '******';
+    curl += ' -H "Content-Type: application/json" -d "@file.json"   # ' + JSON.stringify(shown);
+  }
+  $('log').textContent = curl + '\n\nHTTP ' + status + '\n' +
+    (data === null ? '' : (typeof data === 'string' ? data : JSON.stringify(data, null, 2)));
+}
+
+function errText(r) {
+  const d = r.data || {};
+  let t = d.message || ('Request failed (' + r.status + ')');
+  if (d.fieldErrors) t += ': ' + Object.values(d.fieldErrors).join(', ');
+  return t;
+}
+
+// ---------- Login / logout ----------
+function showLogin() {
+  me = null;
+  $('appView').classList.add('hidden');
+  $('loginView').classList.remove('hidden');
+}
+
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  hide($('loginMsg'));
+  const r = await api('POST', '/api/auth/login', { email: $('email').value, password: $('password').value });
+  if (!r.ok) return show($('loginMsg'), errText(r), 'error');
+  me = r.data;
+  startApp();
+});
+
+$('logoutBtn').addEventListener('click', async () => {
+  await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+  showLogin();
+});
+
+function startApp() {
+  $('loginView').classList.add('hidden');
+  $('appView').classList.remove('hidden');
+  $('whoName').textContent = me.name + ' (' + me.email + ')';
+  $('whoRole').textContent = me.role;
+  const tabs = $('tabs'); tabs.innerHTML = '';
+  ALLOWED[me.role].forEach(key => {
+    const b = document.createElement('button');
+    b.className = 'tab'; b.textContent = RESOURCES[key].label; b.dataset.key = key;
+    b.onclick = () => openTab(key);
+    tabs.appendChild(b);
+  });
+  openTab(ALLOWED[me.role][0]);
+}
+
+// ---------- List ----------
+async function openTab(key) {
+  current = key;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.key === key));
+  $('listTitle').textContent = RESOURCES[key].label;
+  $('addBtn').textContent = '+ Add ' + RESOURCES[key].label.replace(/s$/, '');
+  await loadList();
+}
+
+async function loadList() {
+  hide($('listMsg'));
+  const key = current;
+  const r = await api('GET', '/api/' + RESOURCES[key].path);
+  if (!r.ok) return show($('listMsg'), errText(r), 'error');
+
+  const cols = key === 'STUDENT' ? ['ID', 'Name', 'Email', 'Department', 'Student ID', '']
+             : key === 'TEACHER' ? ['ID', 'Name', 'Email', 'Department', '']
+             : ['ID', 'Name', 'Email', ''];
+  $('thead').innerHTML = cols.map(c => '<th>' + c + '</th>').join('');
+
+  const tb = $('tbody'); tb.innerHTML = '';
+  if (!r.data.length) {
+    tb.innerHTML = '<tr><td class="empty" colspan="' + cols.length + '">No records yet.</td></tr>';
+    return;
+  }
+  r.data.forEach(u => {
+    const tr = document.createElement('tr');
+    const cells = [u.id, u.name, u.email];
+    if (key !== 'ADMIN') cells.push(u.department || '');
+    if (key === 'STUDENT') cells.push(u.studentId || '');
+    cells.forEach(c => { const td = document.createElement('td'); td.textContent = c; tr.appendChild(td); });
+
+    const td = document.createElement('td'); td.className = 'actions';
+    const edit = document.createElement('button'); edit.className = 'small secondary'; edit.textContent = 'Edit';
+    edit.onclick = () => openDialog(u);
+    const del = document.createElement('button'); del.className = 'small danger'; del.textContent = 'Delete';
+    del.onclick = () => removeUser(u);
+    td.append(edit, del); tr.appendChild(td);
+    tb.appendChild(tr);
+  });
+}
+
+async function removeUser(u) {
+  if (!confirm('Delete ' + u.name + ' (' + u.email + ')?')) return;
+  const r = await api('DELETE', '/api/' + RESOURCES[current].path + '/' + u.id);
+  if (!r.ok) return show($('listMsg'), errText(r), 'error');
+  show($('listMsg'), 'Deleted ' + u.name, 'ok');
+  loadList();
+}
+
+// ---------- Add / edit dialog ----------
+$('addBtn').addEventListener('click', () => openDialog(null));
+$('cancelBtn').addEventListener('click', () => $('dlg').close());
+
+function openDialog(user) {
+  editingId = user ? user.id : null;
+  hide($('dlgMsg'));
+  const single = RESOURCES[current].label.replace(/s$/, '');
+  $('dlgTitle').textContent = (user ? 'Edit ' : 'Add ') + single;
+  $('fName').value = user ? user.name : '';
+  $('fEmail').value = user ? user.email : '';
+  $('fPassword').value = '';
+  $('fPassword').required = !user;
+  $('pwHint').textContent = user ? 'Leave blank to keep the current password.' : 'At least 6 characters.';
+  $('fDept').value = user ? (user.department || '') : '';
+  $('fSid').value = user ? (user.studentId || '') : '';
+  $('deptWrap').classList.toggle('hidden', current === 'ADMIN');
+  $('sidWrap').classList.toggle('hidden', current !== 'STUDENT');
+  $('dlg').showModal();
+}
+
+$('userForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  hide($('dlgMsg'));
+  const body = { name: $('fName').value, email: $('fEmail').value };
+  if ($('fPassword').value) body.password = $('fPassword').value;
+  if (current !== 'ADMIN') body.department = $('fDept').value || null;
+  if (current === 'STUDENT') body.studentId = $('fSid').value || null;
+
+  const base = '/api/' + RESOURCES[current].path;
+  const r = editingId === null ? await api('POST', base, body) : await api('PUT', base + '/' + editingId, body);
+  if (!r.ok) return show($('dlgMsg'), errText(r), 'error');
+  $('dlg').close();
+  show($('listMsg'), editingId === null ? 'Created ' + r.data.name : 'Updated ' + r.data.name, 'ok');
+  loadList();
+});
+
+// If a session is already active (page refresh), skip the login screen.
+(async () => {
+  const r = await fetch('/api/auth/me', { credentials: 'same-origin' });
+  if (r.ok) { me = await r.json(); startApp(); }
+})();
+</script>
+</body>
+</html>

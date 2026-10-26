@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ums-db
+    environment:
+      POSTGRES_DB: ums
+      POSTGRES_USER: ums_user
+      POSTGRES_PASSWORD: ums_pass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ums_user -d ums"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: ums-app
+    depends_on:
+      db:
+        condition: service_healthy   # wait until PostgreSQL is ready
+    ports:
+      - "8080:8080"
+    environment:
+      # Spring Boot reads these through application.properties
+      DB_URL: jdbc:postgresql://db:5432/ums
+      DB_USERNAME: ums_user
+      DB_PASSWORD: ums_pass
+      ADMIN_EMAIL: admin@ums.com
+      ADMIN_PASSWORD: admin123
+      SEED_DEMO_DATA: "true"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
