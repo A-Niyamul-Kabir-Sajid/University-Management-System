@@ -18,6 +18,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The five REST endpoints shared by Admin, Teacher and Student controllers.
@@ -42,6 +43,11 @@ public abstract class BaseUserController {
     @GetMapping
     public List<UserResponse> getAll() {
         return userService.findAll(role());
+    }
+
+    @GetMapping("/count")
+    public Map<String, Long> count() {
+        return Map.of("count", userService.countByRole(role()));
     }
 
     @GetMapping("/{id}")
