@@ -50,6 +50,8 @@ public class UserService {
 
     @Transactional
     public UserResponse create(Role role, UserRequest request) {
+        requireValidName(request.name());
+        requireStudentIdForStudent(role, request.studentId());
         String email = normalize(request.email());
         requireValidPassword(request.password());
         if (repository.existsByEmail(email)) {
