@@ -8,6 +8,7 @@ import com.example.ums.model.AppUser;
 import com.example.ums.model.Role;
 import com.example.ums.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /** Unit tests: UserService is tested alone, the repository and encoder are mocks. */
+@DisplayName("Unit Test: UserService (isolated, mocked repository)")
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
@@ -50,8 +52,9 @@ class UserServiceTest {
         return new UserRequest(name, email, password, "CSE", studentId);
     }
 
-    // U1
+    // U1: Blank name is rejected
     @Test
+    @DisplayName("U1: Blank name is rejected")
     void create_blankName_throwsBadRequest() {
         UserRequest req = request("   ", "a@test.com", "secret123", null);
 
@@ -59,8 +62,9 @@ class UserServiceTest {
         verify(repository, never()).save(any());
     }
 
-    // U2
+    // U2: Student without studentId is rejected
     @Test
+    @DisplayName("U2: Student without studentId is rejected")
     void create_studentWithoutStudentId_throwsBadRequest() {
         UserRequest req = request("Karim", "karim@test.com", "secret123", " ");
 
@@ -68,16 +72,18 @@ class UserServiceTest {
         verify(repository, never()).save(any());
     }
 
-    // U3
+    // U3: Count by role returns repository count
     @Test
+    @DisplayName("U3: Count by role returns repository count")
     void countByRole_returnsRepositoryCount() {
         when(repository.countByRole(Role.TEACHER)).thenReturn(7L);
 
         assertEquals(7L, service.countByRole(Role.TEACHER));
     }
 
-    // U4
+    // U4: Duplicate email is rejected
     @Test
+    @DisplayName("U4: Duplicate email is rejected")
     void create_duplicateEmail_throwsDuplicateResource() {
         when(repository.existsByEmail("dup@test.com")).thenReturn(true);
         UserRequest req = request("Dup", "dup@test.com", "secret123", null);
@@ -86,8 +92,9 @@ class UserServiceTest {
         verify(repository, never()).save(any());
     }
 
-    // U5
+    // U5: Admin cannot delete own account
     @Test
+    @DisplayName("U5: Admin cannot delete own account")
     void delete_ownAccount_throwsBadRequest() {
         AppUser me = new AppUser();
         me.setId(1L);
@@ -101,8 +108,9 @@ class UserServiceTest {
         verify(repository, never()).delete(any());
     }
 
-    // U6
+    // U6: Password is hashed and email/name are normalized
     @Test
+    @DisplayName("U6: Password is hashed and email/name are normalized")
     void create_encodesPasswordAndNormalizesEmail() {
         when(repository.existsByEmail("mixed@test.com")).thenReturn(false);
         when(passwordEncoder.encode("secret123")).thenReturn("HASHED");
