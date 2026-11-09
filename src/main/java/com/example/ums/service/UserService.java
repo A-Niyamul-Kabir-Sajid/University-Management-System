@@ -39,12 +39,19 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public long countByRole(Role role) {
+        return repository.countByRole(role);
+    }
+
+    @Transactional(readOnly = true)
     public UserResponse findById(Role role, Long id) {
         return UserResponse.from(getOrThrow(role, id));
     }
 
     @Transactional
     public UserResponse create(Role role, UserRequest request) {
+        requireValidName(request.name());
+        requireStudentIdForStudent(role, request.studentId());
         String email = normalize(request.email());
         requireValidPassword(request.password());
         if (repository.existsByEmail(email)) {
@@ -101,6 +108,18 @@ public class UserService {
         user.setDepartment(request.department());
         // studentId only makes sense for students
         user.setStudentId(user.getRole() == Role.STUDENT ? request.studentId() : null);
+    }
+
+    private void requireValidName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new BadRequestException("Name is required");
+        }
+    }
+
+    private void requireStudentIdForStudent(Role role, String studentId) {
+        if (role == Role.STUDENT && (studentId == null || studentId.isBlank())) {
+            throw new BadRequestException("studentId is required for students");
+        }
     }
 
     private void requireValidPassword(String password) {

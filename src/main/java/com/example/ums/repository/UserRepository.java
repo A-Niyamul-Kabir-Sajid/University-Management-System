@@ -17,6 +17,8 @@ public interface UserRepository extends JpaRepository<AppUser, Long> {
 
     List<AppUser> findByRole(Role role);
 
+    long countByRole(Role role);
+
     /** Makes sure /api/teachers/5 can never return a student, and so on. */
     Optional<AppUser> findByIdAndRole(Long id, Role role);
 }
